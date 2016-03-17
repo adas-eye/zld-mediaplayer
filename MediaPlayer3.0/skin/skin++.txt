@@ -1,0 +1,225 @@
+最近做毕设用到MFC，之前一直自己费了好大劲用图片贴完整个窗口中的所有控件，并不断的使用那些流行的自定义控件(其实很多做得自定义控件)，看了不少代码。想自己实现换肤功能，由于时间紧任务重，换肤一直未能成行，最后还是决定使用界面库skin++2.0。虽然很难达到我预想的效果，但是还凑合着能用能够实现想要的换肤功能。
+
+  下面说一下skin++2.0的使用步骤：
+
+  1、将：SkinPPWTL.h，SkinPPWTL.DLL,SkinPPWTL.lib三个文件放到你的工程目录下面。
+
+  2、在你的项目头文件中包含SkinPPWTL.h,一般包含在StdAfx.h文件中；在项目连接中加入SkinPPWTL.lib链
+
+     接库
+
+  3、现在开始使用Skin++实行换肤 在你的C**App.cpp文件的开始定义宏：#define SKINSPACE _T("/SPATH:")
+
+     在你的InitInstance()函数开始加入以下代码：
+
+     
+
+CString cmdline = GetCommandLine();
+ int nFind = cmdline.Find(SKINSPACE);
+ if(nFind != -1)
+ {
+  cmdline.Delete(0,nFind + _tcslen(SKINSPACE));
+  if(cmdline.GetAt(cmdline.GetLength()-1) == _T('\"'))
+  {
+   cmdline.Delete(cmdline.GetLength()-1,1);
+  }
+
+  skinppLoadSkin((LPTSTR)(LPCTSTR)cmdline); 
+ }
+ else
+ {
+  skinppLoadSkin(_T("skin\\XP-Metallic.ssk"));
+ }
+
+  其中:  skinppLoadSkin(_T("skin\\XP-Metallic.ssk"));用于加载皮肤，根据你皮肤的位置改变路径
+
+4、在程序退出时候做一些清理工作(调用skinppExitSkin();)，最好放在：C**App::ExitInstance() 函数中；
+
+这时候已经实现了换肤。你可以在你任何时候使用函数skinappLoadSkin()执行换肤功能；
+
+下面贴出头文件中Skin++库中提供给我们的成员函数：
+
+//////////////////////////////////////////////////////////////////////////
+
+//加载皮肤
+//SkinFile  :皮肤路径,注意可以是*.ssk,也可以是皮肤目录中的INI文件.
+//bFromIni  :该参数指定皮肤文件是从*.ssk读取,还是从INI文件读取.
+//SKINPPWTL_API BOOL  skinppLoadSkin(TCHAR* szSkinFile,BOOL bFromIni = FALSE);
+SKINPPWTL_API BOOL  skinppLoadSkin(CHAR* szSkinFile,BOOL bFromIni = FALSE); 
+
+SKINPPWTL_API BOOL skinppLoadSkinFromRes(HINSTANCE hInstance,LPCTSTR szResourceName,
+           LPCTSTR szResourceType,TCHAR* szSkinFileName);
+
+//移除皮肤
+SKINPPWTL_API BOOL  skinppRemoveSkin();
+
+//退出界面库，做清理工作。
+SKINPPWTL_API BOOL  skinppExitSkin();
+
+//设置ListBox控件的自画信息
+//hWnd   : ListBox控件的句柄
+//nIndex  : Item项的索引
+//pListBoxItem : Item项自画的结构信息
+SKINPPWTL_API void skinppSetListBoxItemDrawInfo(HWND hWnd,int nIndex,struct ListBoxItem*
+
+                                                 pListBoxItem);
+
+//获得换肤后的系统颜色
+//nColorIndex : 要获取的颜色类型
+SKINPPWTL_API COLORREF skinppGetSkinSysColor(int nColorIndex);
+
+//获得Windows系统默认的颜色
+//nColorIndex : 要获取的颜色类型
+SKINPPWTL_API COLORREF skinppGetDefaultSysColor(int nColorIndex);
+
+//hWnd   : 对话框窗口的句柄
+//nResID  : 对话框资源ID
+SKINPPWTL_API BOOL skinppSetWindowResID(HWND hWnd,int nResID);//[多语言]
+
+SKINPPWTL_API BOOL skinppSetFreeDlgID(HWND hWnd,int nResID);
+
+SKINPPWTL_API BOOL skinppSetSkinResID(HWND hWnd,int nResID);
+
+//设置ListHeader窗口的排序信息
+//hWnd   : ListHeader的窗口句柄
+//nSortColumn : 要对ListHeader排序的列的索引
+//bSortAscending: 是否为升序
+SKINPPWTL_API void skinppSetListHeaderSortInfo(HWND hWnd,int nSortColumn,BOOL bSortAscending = TRUE);
+
+//在给定的HDC上,指定相应的绘制类型和状态,在相应的矩形区域中进行绘制.
+//hdc   :目标DC
+//rect   :绘制区域
+//eDrawType  :绘制类型，目前支持SPLITTERBARHORZ,SPLITTERBARVERT,SPLITTERBARBORDER
+//nState  :选择绘制状态
+SKINPPWTL_API void  skinppDrawSkinObject(HDC hdc,RECT rect,DRAWTYPE eDrawType,int nState);
+
+//通过资源ID,获得相应类型的皮肤资源位图句柄
+//nSkinObjType : 皮肤类型,目前支持 DIALOGTYPE,BUTTONTYPE,CHECKBOXTYPE,RADIOBOXTYPE
+//nResID  : 资源ID
+//nState  : 状态,对BUTTONTYPE,CHECKBOXTYPE,RADIOBOXTYPE有效
+SKINPPWTL_API HBITMAP skinppGetResFromID(SKINOBJTYPE nSkinObjType,int nResID,int nState =0 );
+
+//设置是否自己画对话框背景,该方法用在需要自己对背景进行处理的情况下.
+//hWnd   : 对话框的句柄
+//bErase  : TRUE 为自己画背景,FALSE 为Skin++画,如果没有调用该方法,Skin++将画对话框背景.
+SKINPPWTL_API void skinppSetDialogEraseBkgnd(HWND hWnd,BOOL bErase);
+
+//设置对话框背景是否剪切子控件区域。
+//hWnd   : 对话框句柄
+//bNoClip  : TRUE为不需要剪切,FALSE为需要剪切区域
+//bAllChild  : TRUE为该窗体的所有子对话框都剪切.
+SKINPPWTL_API void skinppSetDialogBkClipRgn(HWND hWnd,BOOL bClip,BOOL bAllChild = TRUE);
+
+//通过皮肤资源名称获得皮肤资源中位图
+//szName  : 皮肤资源名称
+//HBITMAP  : 返回资源中的位图
+SKINPPWTL_API HBITMAP skinppGetBitmapRes(LPCTSTR szName);
+
+//通过资源名称取资源的内存指针
+//szName  : 资源名称
+//nSize   : 资源大小
+//pByte   : 返回值，成功返回非NULL，失败返回NULL
+SKINPPWTL_API BYTE*  skinppGetSkinResource(LPCTSTR szName,int& nSize);
+
+//通过皮肤资源的名称获得位图不被拉伸的区域值
+//szName  : 皮肤资源名称
+//nTopHeight : 返回不被拉伸的顶高
+//nBottomHeight : 返回不被拉伸的底高
+//nLeftWidth : 返回不被拉伸的左宽
+//nRightWidth : 返回不被拉伸的右宽
+SKINPPWTL_API BOOL skinppGetBitmapResRect(LPCTSTR szName,int& nTopHeight,int& nBottomHeight,
+               int& nLeftWidth,int& nRightWidth);
+
+//设置窗口自画是否自己来处理,该方法用于自画部分需要自己处理的情况下
+//hWnd   : 要自画的窗口句柄
+//bCustomDraw : TRUE为自己处理自画,FALSE为交给Skin++处理自画
+SKINPPWTL_API void skinppSetCustomDraw(HWND hWnd,BOOL bCustomDraw);
+
+//设置菜单的皮肤标识
+//hWnd   : 拥有菜单的窗口句柄
+//nSkinObjectID : 菜单皮肤的标识
+SKINPPWTL_API void skinppSetMenuSkinObjectID(HWND hWnd,int nSkinObjectID);
+
+//设置是否对自画菜单进行换肤
+//bSkin   : TRUE为换肤
+SKINPPWTL_API void skinppSetSkinOwnerMenu(BOOL bSkin);
+
+//对菜单进行换肤控制
+//hMenu   : 想换肤的菜单句柄
+//bNoSkin : 是否换肤,TRUE为不换肤,FALSE为换肤
+SKINPPWTL_API void  skinppSetDrawMenu(HMENU hMenu,BOOL bNoSkin);
+ 
+//对指定的窗口去掉皮肤,并且保证不会再被换肤,即使使用SetSkinHwnd也不会换肤.
+//hWnd   : 指定的窗口句柄
+//bChildNoSkin : 是否对该窗口中的子窗口去掉皮肤
+SKINPPWTL_API void skinppSetNoSkinHwnd(HWND hWnd,BOOL bChildNoSkin = TRUE);
+
+//对指定的窗口进行换肤
+//hWnd   : 指定的窗口句柄
+//szClassName : 要子类化的Skin类型 WC_DIALOGBOX/WC_CONTROLBAR等
+SKINPPWTL_API void skinppSetSkinHwnd(HWND hWnd,LPCTSTR szClassName = NULL);
+
+//对指定的窗口临时去掉皮肤,可以通过SetSkinHwnd进行再次换肤
+SKINPPWTL_API void skinppRemoveSkinHwnd(HWND hWnd);
+
+//是对SetNoSkinHwnd的进一步处理,可以解决使用SetNoSkinHwnd引起的Debug版的断言错
+#define SETNOSKINHWND(x) {\
+    HWND w=(x).UnsubclassWindow();\
+ skinppSetNoSkinHwnd(w);\
+ (x).SubclassWindow(w);\
+} 
+
+//是对RemoveSkinHwnd的进一步处理,可以解决使用RemoveSkinHwnd引起的Debug版的断言错
+#define REMOVESKINHWND(x){\
+    HWND w=(x).UnsubclassWindow();\
+ skinppRemoveSkinHwnd(w);\
+ (x).SubclassWindow(w);\
+}
+
+SKINPPWTL_API HGDIOBJ skinppGetResFromID(PRESINFO pResInfo);
+
+  最后贴两张换肤过的对话框，还是蛮酷的。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1.用VC创建新的MFC工程。
+
+2.把Skin++的三个文件SkinPPWTL.h SkinPPWTL.lib SkinPPWTL.dll放到工程目录下。随便考两个皮肤文件到工程目录下。
+
+3.在工程的stdafx.h里面引入Skin++头文件 #include <SkinPPWTL.h>
+
+4.在工程的Project->Setting->Link->Input的Object/library modules处加上SkinPPWTL.lib
+5.在你的工程类App里面加上下面两个个函数，注意ThreadKill声明为static:void CClientApp::SetSkin(CString strSkinFile)
+{
+DWORD dwThread;
+HANDLE hThread=::CreateThread(NULL,0,(LPTHREAD_START_ROUTINE) ThreadKill,0,0,&dwThread);
+CloseHandle(hThread);
+BOOL bReg=skinppLoadSkin(strSkinFile.GetBuffer(strSkinFile.GetLength()));
+strSkinFile.ReleaseBuffer(); 
+}DWORD CClientApp::ThreadKill(LPVOID lp)
+{
+int iCount=0;
+while (iCount++<10000)
+{
+Sleep(1);
+HWND hWnd=::FindWindow(NULL,"UIPOWER");
+if (hWnd==NULL) continue;
+WPARAM wp=BN_CLICKED<<16 | IDNO;
+::SendMessage(hWnd,WM_COMMAND,wp,0);
+break;
+}
+return EXIT_SUCCESS;
+}
+6.在你工程的InitInstance里面调用 theApp.SetSkin(皮肤文件);可以看到没有弹出Skin++的注册窗口，这样就可以正常使用了。 
